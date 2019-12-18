@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import cookie from 'cookie-parser'
 import morgan from 'morgan'
-import catchGlobalError from '$utils/catchGlobalError'
+// import catchGlobalError from '$utils/catchGlobalError'
 
 /**
  * V1
@@ -57,7 +57,7 @@ app.all('*', (_, res) => {
 /**
  * Catch all unhandle exceptions from one place :D
  */
-app.use(catchGlobalError)
+// app.use(catchGlobalError)
 
 // done! we export it so we can start the site in server.js
 export default app

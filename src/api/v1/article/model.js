@@ -1,38 +1,32 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose')
 
 const ArticleSchema = new mongoose.Schema(
-  {
-    title: String,
-    body: String,
-    gallery: [
-      {
-        type: mongoose.Types.ObjectId,
-        ref: "image"
-      }
-    ],
-    author: {
-      type: mongoose.Types.ObjectId,
-      ref: "user",
-      required: true
+    {
+        title: String,
+        body: String,
+        author: {
+            type: mongoose.Types.ObjectId,
+            ref: 'user',
+            required: true,
+        },
+    },
+    {
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
     }
-  },
-  {
-    timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
-  }
 )
 
 ArticleSchema.pre(/^find/, function() {
-  this.populate("author").populate("gallery")
+    this.populate('author').populate('gallery')
 })
 
-ArticleSchema.virtual("comments", {
-  ref: "comment",
-  localField: "_id",
-  foreignField: "article"
+ArticleSchema.virtual('comments', {
+    ref: 'comment',
+    localField: '_id',
+    foreignField: 'article',
 })
 
 // ArticleSchema.virtual('commentCount' , )
 
-module.exports = mongoose.model("article", ArticleSchema)
+module.exports = mongoose.model('Article', ArticleSchema)
