@@ -14,10 +14,10 @@ const SchemaDefinition = new Schema({
         type: Boolean,
         default: true,
     },
-    author: {
-        type: Types.ObjectId,
-        ref: 'User',
-    },
+    // author: {
+    //     type: Types.ObjectId,
+    //     ref: 'User',
+    // },
 })
 
 // const slug = text =>

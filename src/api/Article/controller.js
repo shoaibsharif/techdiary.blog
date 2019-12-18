@@ -20,7 +20,7 @@ const createArticle = async (req, res) => {
     })
     await schema.validateAsync(req.body, { abortEarly: false })
 
-    req.body.author = req.user._id
+    // req.body.author = req.user._id
     let article = await Article.create(req.body)
     res.json(article)
 }
