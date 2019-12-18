@@ -1,0 +1,792 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _express = _interopRequireDefault(require("express"));
+
+var _routes = _interopRequireDefault(require("./users/routes"));
+
+require("./users/model");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const Router = _express.default.Router();
+/**
+ * GET v1/status
+ */
+
+
+Router.get('/', (req, res) => res.send('OK'));
+/**
+ * GET v1/users
+ */
+
+Router.use('/users', _routes.default);
+var _default = Router;
+exports.default = _default;
+"use strict";
+
+/* eslint-disable */
+const jwt = require('jsonwebtoken');
+
+const {
+  promisify
+} = require('util');
+
+const AppError = require('$utils/AppError');
+
+const {
+  UNAUTHORIZED
+} = require('$utils/errorTypes');
+
+const User = require('../users/model');
+
+const isAuthenticated = async (req, res, next) => {
+  var _req$headers;
+
+  let token = req.cookies.token || ((_req$headers = req.headers) === null || _req$headers === void 0 ? void 0 : _req$headers.authorization.replace('Bearer ', ''));
+
+  if (token) {
+    let {
+      userId
+    } = await promisify(jwt.verify)(token, process.env.APP_SECRET);
+    const user = await User.findOne({
+      where: {
+        _id: userId
+      }
+    });
+    req.user = user;
+    res.locals.user = user;
+    next();
+  } else {
+    throw new AppError('You are not logged in', 401, UNAUTHORIZED);
+  }
+};
+
+module.exports = isAuthenticated;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.me = exports.logoutController = exports.settingsController = exports.registerController = exports.facebookAuthentication = exports.loginController = void 0;
+
+var _model = _interopRequireDefault(require("./model"));
+
+var _joi = _interopRequireDefault(require("@hapi/joi"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const loginController = async (req, res) => {
+  const schema = _joi.default.object().keys({
+    email: _joi.default.string().email().required(),
+    password: _joi.default.string().required()
+  });
+
+  await schema.validateAsync(req.body, {
+    abortEarly: false
+  });
+  let {
+    email,
+    password
+  } = req.body;
+  let token = await _model.default.auth(email, password);
+  res.cookie('token', token, {
+    expires: new Date(Date.now() + 365 * 24 * 3600 * 1000),
+    httpOnly: true
+  });
+  res.json({
+    message: 'Login Successfull',
+    token
+  });
+};
+
+exports.loginController = loginController;
+
+const registerController = async (req, res) => {
+  let user = await _model.default.create(req.body);
+  res.status(201).json({
+    message: 'You have registered successfully',
+    user
+  });
+};
+
+exports.registerController = registerController;
+
+const facebookAuthentication = (req, res) => {
+  res.json({
+    message: 'facebookAuthentication'
+  });
+};
+
+exports.facebookAuthentication = facebookAuthentication;
+
+const logoutController = (req, res) => {
+  res.clearCookie('token');
+  res.json({
+    message: 'Logged out successfully'
+  });
+};
+
+exports.logoutController = logoutController;
+
+const me = (req, res) => {
+  res.json(req.user);
+};
+
+exports.me = me;
+
+const settingsController = (req, res) => {
+  res.json({
+    message: 'settingsController'
+  });
+};
+
+exports.settingsController = settingsController;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _sequelize = _interopRequireDefault(require("sequelize"));
+
+var _$db = _interopRequireDefault(require("$db"));
+
+var _bcryptjs = require("bcryptjs");
+
+var _jsonwebtoken = require("jsonwebtoken");
+
+var _AppError = _interopRequireDefault(require("$utils/AppError"));
+
+var _errorTypes = require("$utils/errorTypes");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const User = _$db.default.define('user', {
+  _id: {
+    primaryKey: true,
+    type: _sequelize.default.UUID,
+    defaultValue: _sequelize.default.UUIDV4
+  },
+  firstName: {
+    type: _sequelize.default.STRING,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'Required'
+      }
+    }
+  },
+  lastName: {
+    type: _sequelize.default.STRING,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'Required'
+      }
+    }
+  },
+  email: {
+    type: _sequelize.default.STRING,
+    allowNull: false,
+    unique: {
+      msg: 'Email already in use'
+    },
+    validate: {
+      notNull: {
+        msg: 'Required'
+      },
+      isEmail: {
+        msg: 'Invalid email address'
+      }
+    }
+  },
+  facebookUUID: {
+    type: _sequelize.default.STRING,
+    validate: {
+      isUUID: {
+        msg: 'Not a valid uuid'
+      }
+    }
+  },
+  password: {
+    type: _sequelize.default.STRING,
+    allowNull: false,
+    validate: {
+      notNull: {
+        msg: 'Required'
+      },
+      len: {
+        args: [5, 50],
+        msg: 'Password length must be between 5 to 50 characters'
+      }
+    }
+  }
+});
+
+User.beforeCreate(async user => {
+  user.password = await (0, _bcryptjs.hash)(user.password, 10);
+});
+/**
+ * User auth check method
+ * @param {string} email - User namil address
+ * @param {string} password - User password
+ * @return {string} token - json web token
+ */
+
+User.auth = async function (email, password) {
+  // fetch the user
+  let user = await User.findOne({
+    where: {
+      email
+    }
+  });
+  if (!user) throw new _AppError.default('Invalid credentials', 401, _errorTypes.UNCONTROLLED_ERROR); // match password
+
+  let isMatched = await (0, _bcryptjs.compare)(password, user.password);
+
+  if (isMatched) {
+    let token = (0, _jsonwebtoken.sign)({
+      userId: user._id
+    }, process.env.APP_SECRET);
+    return token;
+  } else {
+    throw new _AppError.default('Invalid credentials', 401, _errorTypes.UNCONTROLLED_ERROR);
+  }
+};
+
+var _default = User;
+exports.default = _default;
+"use strict";
+
+var _express = _interopRequireDefault(require("express"));
+
+var _isAuthenticated = _interopRequireDefault(require("../middlewares/isAuthenticated"));
+
+var _controller = require("./controller");
+
+var _catchErrors = _interopRequireDefault(require("$utils/catchErrors"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const Router = _express.default.Router(); // ------------------------------------------------------------------------------------------
+// Current Permissions.
+// ------------------------------------------------------------------------------------------
+
+/**
+ * @apiDefine Authenticated Authentication need for this.
+ * Bearer token must be passed via Aythorization header or cookie
+ *
+ * @apiVersion 1.0.0
+ */
+
+/**
+ * @api {POST} v1/users/login Login user
+ * @apiDescription Login to user account
+ * @apiName Login
+ * @apiGroup User
+ * @apiVersion  1.0.0
+ *
+ * @apiParam  {String}  email       Email
+ * @apiParam  {String}  password    Password
+ *
+ * @apiSuccess {string} message Login successfull msg
+ * @apiSuccess {string} token Generated jwt token
+ *
+ * @apiError (Bad Request 400)  VALIDATION_ERROR Some parameters may contain invalid values
+ * @apiErrorExample {Object} When no field provided:
+    {
+        "type": "VALIDATION_ERROR",
+        "errors": {
+            "email": "\"email\" is required",
+            "password": "\"password\" is required"
+        },
+        "message": "You have some validation error",
+        "stack": "ValidationError: \"email\" is required. \"password\" is required"
+    }
+    @apiErrorExample {Object} When email address is wrong:
+    {
+        "type": "VALIDATION_ERROR",
+        "errors": {
+            "email": "\"email\" must be a valid email"
+        },
+        "message": "You have some validation error",
+        "stack": "ValidationError: \"email\" must be a valid email"
+    }
+ */
+
+
+Router.post('/login', (0, _catchErrors.default)(_controller.loginController));
+/**
+ *
+ * @api {POST} v1/fbAuth/:token Authenticate with Facebook
+ * @apiName Facebook Auth
+ * @apiGroup User
+ * @apiVersion  1.0.0
+ *
+ * @apiParam  {String} token Facebook user access token
+ *
+ */
+
+Router.post('/fbAuth/:token', (0, _catchErrors.default)(_controller.facebookAuthentication));
+/**
+ * @api {POST} v1/users/register Register user
+ * @apiDescription Register user account
+ * @apiName Register
+ * @apiGroup User
+ * @apiVersion  1.0.0
+ *
+ * @apiParam  {String}  firstName       User First Name
+ * @apiParam  {String}  lastName        User Last Name
+ * @apiParam  {String}  email(unique)           User Email address
+ * @apiParam  {String}  password           User password address
+ *
+ * 
+ * @apiSuccess {String} message Success message
+ * @apiSuccess {Object} user User detail object
+ * @apiSuccessExample Success-Response:
+    {
+        "message": "You have registered successfully",
+        "user": {
+            "_id": "0c1b30b3-23e0-46e6-aa0f-5ef265420ec7",
+            "firstName": "SHoaib",
+            "lastName": "Sharif",
+            "email": "shoaibd@gmail.com",
+            "password": "$2a$10$GbguiA/DSO9vrB6XvU1CQ.CW9QuD7XVONTcd8Zb3ReTP81A0QF.4.",
+            "updatedAt": "2019-12-08T05:58:14.116Z",
+            "createdAt": "2019-12-08T05:58:14.116Z"
+        }
+    }
+ * 
+ * @apiError (Bad Request 400)  VALIDATION_ERROR Some parameters may contain invalid values
+    
+    @apiErrorExample {type} Email already taken:
+    {
+        "type": "VALIDATION_ERROR",
+        "errors": {
+            "email": "Email already in use"
+        },
+        "message": "{{error Stack}}"
+    }
+
+    @apiErrorExample {Object} No field provided
+    {
+        "type": "VALIDATION_ERROR",
+        "errors": {
+            "firstName": "Required",
+            "lastName": "Required",
+            "email": "Required",
+            "password": "Required"
+        },
+        "message": "{{error Stack}}"
+    }
+ */
+
+Router.post('/register', (0, _catchErrors.default)(_controller.registerController));
+/**
+ * @api {GET} v1/users/me My info
+ * @apiDescription Logout currently logged in user
+ * @apiName Me
+ * @apiGroup User
+ * @apiVersion  1.0.0
+ * @apiPermission Authenticated
+ *
+ *
+ * @apiHeader {String} Authorization Authorization token
+ *  * @apiHeaderExample {Header} Header-Example
+ *     Authorization: Bearer {{token}}
+ *
+    @apiSuccessExample Success-Response:
+    {
+        "_id": "0c1b30b3-23e0-46e6-aa0f-5ef265420ec7",
+        "firstName": "SHoaib",
+        "lastName": "Sharif",
+        "email": "shoaibd@gmail.com",
+        "password": "$2a$10$GbguiA/DSO9vrB6XvU1CQ.CW9QuD7XVONTcd8Zb3ReTP81A0QF.4.",
+        "updatedAt": "2019-12-08T05:58:14.116Z",
+        "createdAt": "2019-12-08T05:58:14.116Z"
+    }
+ */
+
+Router.get('/me', (0, _catchErrors.default)(_isAuthenticated.default), (0, _catchErrors.default)(_controller.me));
+/**
+ * @api {POST} v1/users/logout Logout user
+ * @apiDescription Get current logged in user object
+ * @apiName Logout
+ * @apiGroup User
+ * @apiVersion  1.0.0
+ * @apiPermission Authenticated
+ *
+ *
+ * @apiHeader {String} Authorization Authorization token
+ * @apiHeaderExample {Header} Header-Example
+ *     Authorization: Bearer {{token}}
+ *
+    @apiSuccessExample Success-Response:
+    {
+        "message": "Logged out successfully"
+    }
+ */
+
+Router.post('/logout', (0, _catchErrors.default)(_isAuthenticated.default), (0, _catchErrors.default)(_controller.logoutController));
+Router.post('/settings', (0, _catchErrors.default)(_controller.settingsController));
+module.exports = Router;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _express = _interopRequireDefault(require("express"));
+
+var _cors = _interopRequireDefault(require("cors"));
+
+var _cookieParser = _interopRequireDefault(require("cookie-parser"));
+
+var _morgan = _interopRequireDefault(require("morgan"));
+
+var _catchGlobalError = _interopRequireDefault(require("$utils/catchGlobalError"));
+
+var _bootstrap = _interopRequireDefault(require("./api/v1/bootstrap"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * V1
+ */
+
+/**
+ * Initialize Express application
+ */
+const app = (0, _express.default)();
+/**
+ * Enable cors
+ */
+
+app.use((0, _cors.default)());
+app.use((0, _cookieParser.default)(process.env.APP_SECRET));
+/**
+ * Express Logger
+ */
+
+if (process.env.NODE_ENV === 'development') app.use((0, _morgan.default)('dev'));
+/**
+ * Parse request Body
+ */
+
+app.use(_express.default.urlencoded({
+  extended: true
+}));
+app.use(_express.default.json());
+/**
+ * Apis
+ */
+
+app.get('/', (req, res) => {
+  res.json({
+    status: '🔥 🔥 Server is working 🔥 🔥',
+    NODE_ENV: process.env.NODE_ENV,
+    database: {
+      dbUrl: process.env.DATABASE_URL,
+      ssl: process.env.DB_SSL
+    }
+  });
+});
+app.use('/v1', _bootstrap.default); // Fallback router
+
+app.all('*', (_, res) => {
+  res.status(404).json({
+    message: 'Invalid api route'
+  });
+});
+/**
+ * Catch all unhandle exceptions from one place :D
+ */
+
+app.use(_catchGlobalError.default); // done! we export it so we can start the site in server.js
+
+var _default = app;
+exports.default = _default;
+"use strict";
+
+var _sequelize = _interopRequireDefault(require("sequelize"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * ----------------------------------------------------------------
+ * Database Connection
+ * ----------------------------------------------------------------
+ */
+const dialect = process.env.DB_TYPE;
+const ssl = process.env.DB_SSL || false;
+const db = new _sequelize.default(process.env.DATABASE_URL, {
+  dialectOptions: {
+    ssl: ssl
+  },
+  dialect,
+  logging: false
+}); // const db = new Sequelize({
+//     dialect: 'sqlite',
+//     storage: path.join(__dirname + '/database.sqlite'),
+//     logging: false,
+// })
+// Hello
+
+/**
+ * ----------------------------------------------------------------
+ * Check DB Connection
+ * ----------------------------------------------------------------
+ */
+
+db.authenticate().then(() => {
+  console.log('Connection has been established successfully.');
+}).catch(err => {
+  console.error('Unable to connect to the database:', err);
+});
+module.exports = db;
+"use strict";
+
+var _$app = _interopRequireDefault(require("$app"));
+
+var _$db = _interopRequireDefault(require("$db"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * -------------------------------------------
+ *      Models
+ * -------------------------------------------
+ */
+// const User = require('~models/User')
+
+/**
+ * Sync database
+ */
+const port = process.env.PORT || 3000;
+
+_$app.default.listen(port, () => {
+  /**
+   * Start Server
+   */
+  _$db.default.sync().then(r => console.log('Database Syncronize sucessfully')).catch(e => console.log(e)); // msg
+
+
+  console.log(`Server working at http://localhost:${port}`);
+});
+"use strict";
+
+const errorTypes = require('$utils/errorTypes');
+/**
+ * AppError Class for throwing app custom error
+ */
+
+
+class AppError extends Error {
+  /**
+   * @param {string} msg - Error Message
+   * @param {number} statusCode - Error status code 4xx
+   * @param {errorTypes} type - Error type enum
+   * @param {{}} errors - error object
+   *
+   * @returns @void
+   */
+  constructor(msg, statusCode, type = errorTypes.APP_ERROR, errors) {
+    super();
+    this.name = type;
+    this.message = msg;
+    this.errors = errors;
+    this.statusCode = statusCode;
+  }
+
+}
+
+module.exports = AppError;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+const catchErrors = fn => {
+  return function (req, res, next) {
+    return fn(req, res, next).catch(next);
+  };
+};
+
+var _default = catchErrors;
+exports.default = _default;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _formatDBValidationErrors = _interopRequireDefault(require("$formatters/formatDBValidationErrors"));
+
+var _formatJoiErrors = _interopRequireDefault(require("$formatters/formatJoiErrors"));
+
+var _errorTypes = require("$utils/errorTypes");
+
+var _errorMsg = _interopRequireDefault(require("$utils/errorMsg"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var _default = (error, req, res, next) => {
+  /**
+   * -----------------------------------------------------------------
+   *      Catch Validation Errors
+   * -----------------------------------------------------------------
+   */
+  // error thrown by AppError
+  if (error.name === _errorTypes.UNCONTROLLED_ERROR) {
+    res.status(error.statusCode).json((0, _errorMsg.default)({
+      type: _errorTypes.UNCONTROLLED_ERROR,
+      message: error.message,
+      errors: error === null || error === void 0 ? void 0 : error.errors,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }));
+  } // Catch validation errors thrown by JOI
+
+
+  if (error.name === 'ValidationError') {
+    let errors = (0, _formatJoiErrors.default)(error);
+    res.status(400).json((0, _errorMsg.default)({
+      type: _errorTypes.VALIDATION_ERROR,
+      message: 'You have some validation error',
+      errors,
+      stack: error.stack
+    }));
+  } // Catch validation errors thrown by Sequelize model definition
+
+
+  if (error.name === 'SequelizeValidationError') {
+    let errors = (0, _formatDBValidationErrors.default)(error);
+    res.status(400).json((0, _errorMsg.default)({
+      type: _errorTypes.VALIDATION_ERROR,
+      message: 'You have some validation error',
+      errors,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }));
+  } // Unique constrain validation error thrown by sequelize
+
+
+  if (error.name === 'SequelizeUniqueConstraintError') {
+    let errors = (0, _formatDBValidationErrors.default)(error);
+    res.status(400).json((0, _errorMsg.default)({
+      type: _errorTypes.VALIDATION_ERROR,
+      message: 'You have some validation error',
+      errors,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }));
+  }
+  /**
+   * -----------------------------------------------------------------
+   *      Internal server Errors
+   * -----------------------------------------------------------------
+   */
+
+
+  res.status(error.statusCode).json((0, _errorMsg.default)({
+    type: error.name,
+    message: error.message,
+    errors: error === null || error === void 0 ? void 0 : error.errors,
+    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+  }));
+};
+
+exports.default = _default;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+/**
+ *
+ * @param {*} type
+ * @param {*} statusCode
+ * @param {*} errors
+ * @param {*} message
+ * @param {*} stack
+ */
+const errorMsg = ({
+  type,
+  statusCode,
+  errors,
+  message,
+  stack
+}) => ({
+  type,
+  statusCode,
+  errors,
+  message,
+  stack
+});
+
+var _default = errorMsg;
+exports.default = _default;
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+/**
+ * @enum {string} - All error types
+ */
+const errorTypes = {
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  JWT_TOKEN: 'JWT_TOKEN',
+  UNCONTROLLED_ERROR: 'UNCONTROLLED_ERROR',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  INVALID_CREDENTIAL: 'INVALID_CREDENTIAL',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR'
+};
+var _default = errorTypes;
+exports.default = _default;
+"use strict";
+
+/**
+ * ----------------------------------------------------------------
+ * Format Errors
+ * ----------------------------------------------------------------
+ */
+const formatDBValidationErrors = err => {
+  let errors = err.errors;
+  let errorJson = {};
+
+  if (errors) {
+    errors.map(({
+      message,
+      path
+    }) => {
+      errorJson[path] = message;
+    });
+  }
+
+  return errorJson;
+};
+
+module.exports = formatDBValidationErrors;
+"use strict";
+
+const formatJoiErrors = err => {
+  let errors = {};
+  err.details.forEach(e => {
+    errors[e.path[0]] = e.message;
+  });
+  return errors;
+};
+
+module.exports = formatJoiErrors;
