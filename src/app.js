@@ -2,12 +2,12 @@ import express from 'express'
 import cors from 'cors'
 import cookie from 'cookie-parser'
 import morgan from 'morgan'
-// import catchGlobalError from '$utils/catchGlobalError'
+import catchGlobalError from '$utils/catchGlobalError'
 
 /**
  * V1
  */
-import v1_api from './api/v1/bootstrap'
+import apiBootstrap_v1 from './api'
 
 /**
  * Initialize Express application
@@ -35,17 +35,17 @@ app.use(express.json())
 /**
  * Apis
  */
-app.get('/', (req, res) => {
-    res.json({
-        status: '🔥 🔥 Server is working 🔥 🔥',
-        NODE_ENV: process.env.NODE_ENV,
-        database: {
-            dbUrl: process.env.DATABASE_URL,
-            ssl: process.env.DB_SSL,
-        },
-    })
-})
-app.use('/v1', v1_api)
+// app.get('/status', (req, res) => {
+//     res.json({
+//         status: '🔥 🔥 Server is working 🔥 🔥',
+//         NODE_ENV: process.env.NODE_ENV,
+//         database: {
+//             dbUrl: process.env.DATABASE_URL,
+//             ssl: process.env.DB_SSL,
+//         },
+//     })
+// })
+app.use('/api/v1', apiBootstrap_v1)
 
 // Fallback router
 app.all('*', (_, res) => {
@@ -54,10 +54,6 @@ app.all('*', (_, res) => {
     })
 })
 
-/**
- * Catch all unhandle exceptions from one place :D
- */
-// app.use(catchGlobalError)
+app.use(catchGlobalError)
 
-// done! we export it so we can start the site in server.js
 export default app

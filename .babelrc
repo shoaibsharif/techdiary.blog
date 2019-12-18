@@ -7,7 +7,11 @@
             {
                 "alias": {
                     "$app": "./src/app.js",
-                    "$factory": "./src/api/factory"
+                    "$api": "./src/api",
+                    "$utils": "./src/utils",
+                    "$formatters": "./src/utils/formatters",
+                    "$factory": "./src/api/factory.js",
+                    "$middlewares": "./src/middlewares"
                 }
             }
         ]
