@@ -12,11 +12,10 @@ class AppError extends Error {
      *
      * @returns @void
      */
-    constructor(msg, statusCode, type = errorTypes.APP_ERROR, errors) {
+    constructor(msg, statusCode = 400, type = 'AppError') {
         super()
         this.name = type
         this.message = msg
-        this.errors = errors
         this.statusCode = statusCode
     }
 }

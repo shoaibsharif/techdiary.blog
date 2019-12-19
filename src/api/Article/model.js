@@ -57,26 +57,26 @@ const slug = text =>
     Date.now()
 
 SchemaDefinition.pre('save', function(next) {
-    if (this.slug) {
-        this.slug = slug(article.title)
-    }
-
-    // this.tags = this.tags.split(',')
+    this.slug = slug(this.title)
+    this.tags = this.tags[0].split(',')
     next()
 })
 
 SchemaDefinition.pre(/^find/, function(next) {
-    // this.select('-body')
     this.populate({
         path: 'author',
         select: '-password',
     })
+
     next()
 })
 
 // todo
 SchemaDefinition.virtual('excerpt').get(function() {
     return this.body?.slice(0, 50) + '...'
+})
+SchemaDefinition.virtual('isEdited').get(function() {
+    return this.createdAt != this.updatedAt
 })
 
 SchemaDefinition.plugin(uniqueValidator)

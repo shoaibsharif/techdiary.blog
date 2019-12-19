@@ -17,31 +17,18 @@ export default (error, req, res, next) => {
      */
 
     // error thrown by AppError
-    // if (error.name === UNCONTROLLED_ERROR) {
-    //     res.status(error.statusCode).json(
-    //         errorMsg({
-    //             type: UNCONTROLLED_ERROR,
-    //             message: error.message,
-    //             errors: error?.errors,
-    //             stack:
-    //                 process.env.NODE_ENV === 'development'
-    //                     ? error.stack
-    //                     : undefined,
-    //         })
-    //     )
-    // }
+    if (error.name === 'AppError') {
+        res.status(error.statusCode).json(
+            errorMsg({
+                type: error.name,
+                message: error.message,
+                stack: process.env.NODE_ENV === 'dev' ? error.stack : undefined,
+            })
+        )
+    }
 
     // Catch validation errors thrown by JOI
     if (error.name === 'ValidationError') {
-        // let errors = formatJoiErrors(error)
-        // res.status(400).json(
-        //     errorMsg({
-        //         type: 'VALIDATION_ERROR',
-        //         message: 'You have some validation error',
-        //         errors,
-        //         stack: error.stack,
-        //     })
-        // )
         res.json(error)
     }
 
