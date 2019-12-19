@@ -1,50 +1,84 @@
-import { Schema, model, Types } from 'mongoose'
+import { Schema, model } from 'mongoose'
+import uniqueValidator from 'mongoose-unique-validator'
+import validator from 'validator'
 
-const SchemaDefinition = new Schema({
-    title: String,
-    slug: String,
-    tags: [String],
-    coverImage: String,
-    body: String,
-    isAnonymous: {
-        type: Boolean,
-        default: false,
+const SchemaDefinition = new Schema(
+    {
+        title: {
+            type: String,
+            trim: true,
+            required: [true, 'Title is required'],
+            minlength: [15, 'Title should atleast 15 characters'],
+        },
+        slug: {
+            type: String,
+            trim: true,
+        },
+        tags: {
+            type: [String],
+            trim: true,
+            required: [true, 'Tags is required'],
+        },
+        coverImage: {
+            type: String,
+            trim: true,
+            validate: [validator.isURL, 'Invalid url'],
+        },
+        body: {
+            type: String,
+            trim: true,
+        },
+        isAnonymous: {
+            type: Boolean,
+            default: false,
+        },
+        isPublished: {
+            type: Boolean,
+            default: true,
+        },
+        author: {
+            type: Schema.ObjectId,
+            ref: 'User',
+        },
     },
-    isPublished: {
-        type: Boolean,
-        default: true,
-    },
-    // author: {
-    //     type: Types.ObjectId,
-    //     ref: 'User',
-    // },
+    {
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+        timestamps: true,
+    }
+)
+
+const slug = text =>
+    text
+        .replace(/[#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/g, '')
+        .split(' ')
+        .join('-') +
+    '-' +
+    Date.now()
+
+SchemaDefinition.pre('save', function(next) {
+    if (this.slug) {
+        this.slug = slug(article.title)
+    }
+
+    // this.tags = this.tags.split(',')
+    next()
 })
 
-// const slug = text =>
-//     text
-//         .replace(/[#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/g, '')
-//         .split(' ')
-//         .join('-') +
-//     '-' +
-//     Date.now()
-
-// SchemaDefinition.pre('save', function() {
-//     if (this.slug) {
-//         this.slug = slug(article.title)
-//     }
-//     this.tags = this.tags.split(',')
-// })
-
-SchemaDefinition.pre(/^find/, function() {
-    this.select('-body')
+SchemaDefinition.pre(/^find/, function(next) {
+    // this.select('-body')
     this.populate({
         path: 'author',
         select: '-password',
     })
+    next()
 })
 
-// SchemaDefinition.virtual('excerpt').get(function() {
-//     return this.body.slice(0, 12)
-// })
+// todo
+SchemaDefinition.virtual('excerpt').get(function() {
+    return this.body?.slice(0, 50) + '...'
+})
+
+SchemaDefinition.plugin(uniqueValidator)
 
 export default model('Article', SchemaDefinition)

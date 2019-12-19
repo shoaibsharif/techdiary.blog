@@ -33,15 +33,16 @@ export default (error, req, res, next) => {
 
     // Catch validation errors thrown by JOI
     if (error.name === 'ValidationError') {
-        let errors = formatJoiErrors(error)
-        res.status(400).json(
-            errorMsg({
-                type: 'VALIDATION_ERROR',
-                message: 'You have some validation error',
-                errors,
-                stack: error.stack,
-            })
-        )
+        // let errors = formatJoiErrors(error)
+        // res.status(400).json(
+        //     errorMsg({
+        //         type: 'VALIDATION_ERROR',
+        //         message: 'You have some validation error',
+        //         errors,
+        //         stack: error.stack,
+        //     })
+        // )
+        res.json(error)
     }
 
     /**

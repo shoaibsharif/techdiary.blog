@@ -1,29 +1,54 @@
 import { Schema, model } from 'mongoose'
 import { hash } from 'bcryptjs'
 import { v4 } from 'uuid'
+import uniqueValidator from 'mongoose-unique-validator'
+
+import validator from 'validator'
 
 const SchemaDefinition = new Schema({
-    name: String,
+    name: {
+        type: String,
+        trim: true,
+        required: [true, 'Name is required'],
+    },
     username: {
         type: String,
-        unique: true,
-        index: true,
+        unique: [true, 'Username already taken'],
         trim: true,
         lowercase: true,
     },
     email: {
         type: String,
-        unique: true,
-        index: true,
+        unique: [true, 'Email already taken'],
         trim: true,
         lowercase: true,
+        validate: [
+            {
+                validator: validator.isEmail,
+                message: 'Email is not valid',
+            },
+        ],
     },
     bio: String,
     profilePhoto: {
         type: String,
         trim: true,
+        validate: [validator.isURL, 'Invalid url'],
     },
-    password: String,
+    password: {
+        type: String,
+        required: [true, 'Password is required'],
+    },
+    confirm_password: {
+        type: String,
+        required: [true, 'Password Confirmation is required'],
+        validate: {
+            validator: function(confirm_password) {
+                return confirm_password === this.password
+            },
+            message: 'Password did not matched',
+        },
+    },
     passwordResetToken: String,
     emailVerificationToken: String,
     passwordResetExpires: Date,
@@ -41,7 +66,10 @@ SchemaDefinition.pre('save', async function(next) {
     // let email = new Email(user, url)
     // email.send('welcome', 'Welcome to TechDiary.blog')
 
+    this.confirm_password = undefined
     next()
 })
+
+SchemaDefinition.plugin(uniqueValidator)
 
 export default model('User', SchemaDefinition)

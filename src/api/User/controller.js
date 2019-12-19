@@ -6,23 +6,6 @@ import jwt from 'jsonwebtoken'
 import { compare, hash } from 'bcryptjs'
 
 const register = async (req, res) => {
-    const schema = Joi.object().keys({
-        name: Joi.string().required(),
-        username: Joi.string().required(),
-        bio: Joi.string().max(250),
-        profilePhoto: Joi.string().max(300),
-        email: Joi.string()
-            .email()
-            .required(),
-        password: Joi.string()
-            .min(5)
-            .required(),
-        confirm_password: Joi.any()
-            .valid(Joi.ref('password'))
-            .required(),
-    })
-    await schema.validateAsync(req.body, { abortEarly: false })
-
     let user = await User.create(req.body)
     res.json({
         message:
