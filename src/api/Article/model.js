@@ -79,6 +79,12 @@ SchemaDefinition.virtual('isEdited').get(function() {
     return this.createdAt != this.updatedAt
 })
 
+SchemaDefinition.virtual('comments', {
+    ref: 'Comment',
+    foreignField: 'article',
+    localField: '_id',
+})
+
 SchemaDefinition.plugin(uniqueValidator)
 
 export default model('Article', SchemaDefinition)

@@ -58,6 +58,7 @@ const login = async (req, res) => {
         res.locals.user = user
         res.json({
             message: 'ওয়াও 😱😱😱 , আপনি সফল ভাবে লগইন করে ফেলেছেন 🎉🙏',
+            token,
         })
     } else {
         res.status(400)
@@ -68,7 +69,15 @@ const login = async (req, res) => {
 }
 
 const me = async (req, res) => {
-    res.json(req.user)
+    let me = await User.findOne({ _id: req.user._id }).populate('articles')
+    res.json(me)
+}
+
+const users = async (req, res) => {
+    let users = await User.find()
+    res.json({
+        users,
+    })
 }
 
 const logout = (req, res) => {
@@ -117,4 +126,4 @@ const updatePassword = async (req, res) => {
     })
 }
 
-export { register, login, me, logout, updateProfile, updatePassword }
+export { register, login, me, users, logout, updateProfile, updatePassword }

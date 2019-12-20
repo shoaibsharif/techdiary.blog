@@ -6,11 +6,11 @@
  * @param {*} message
  * @param {*} stack
  */
-const errorMsg = ({ type, statusCode, errors, message, stack }) => ({
+const errorMsg = ({ type, statusCode = 400, errors, message, stack }) => ({
     type,
     statusCode,
-    errors,
     message,
+    errors,
     stack,
 })
 

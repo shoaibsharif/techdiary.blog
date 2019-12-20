@@ -6,6 +6,7 @@ import {
     register,
     login,
     me,
+    users,
     logout,
     updateProfile,
     updatePassword,
@@ -26,6 +27,7 @@ router.post(
     catchErrors(updatePassword)
 )
 router.get('/me', catchErrors(isAuthenticated), catchErrors(me))
+router.get('/users', catchErrors(users))
 router.post('/logout', catchErrors(isAuthenticated), logout)
 // router.post('/password-recovery-request')
 

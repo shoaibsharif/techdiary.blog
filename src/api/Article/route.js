@@ -5,12 +5,7 @@ import AppError from '$utils/AppError'
 import Article from './model'
 const router = Router()
 
-import {
-    articleList,
-    createArticle,
-    deleteArticle,
-    updateArticle,
-} from './controller'
+import { index, store, show, destroy, update } from './controller'
 
 const thisIsMyArticle = async (req, res, next) => {
     let article = await Article.findById(req.params.id)
@@ -30,20 +25,21 @@ const thisIsMyArticle = async (req, res, next) => {
 
 router
     .route('/')
-    .get(catchErrors(articleList))
-    .post(catchErrors(isAuthenticated), catchErrors(createArticle))
+    .get(catchErrors(index))
+    .post(catchErrors(isAuthenticated), catchErrors(store))
 
 router
     .route('/:id')
+    .get(catchErrors(show))
     .put(
         catchErrors(isAuthenticated),
         catchErrors(thisIsMyArticle),
-        catchErrors(updateArticle)
+        catchErrors(update)
     )
     .delete(
         catchErrors(isAuthenticated),
         catchErrors(thisIsMyArticle),
-        catchErrors(deleteArticle)
+        catchErrors(destroy)
     )
 
 export default router

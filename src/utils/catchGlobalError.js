@@ -1,13 +1,5 @@
-import formatDBValidationErrors from '$formatters/formatDBValidationErrors'
-import formatJoiErrors from '$formatters/formatJoiErrors'
-
-import {
-    VALIDATION_ERROR,
-    INTERNAL_SERVER_ERROR,
-    UNCONTROLLED_ERROR,
-} from '$utils/errorTypes'
-
 import errorMsg from '$utils/errorMsg'
+import formatMongooseValidationErrors from '$utils/formatters/formatMongooseValidationErrors'
 
 export default (error, req, res, next) => {
     /**
@@ -27,9 +19,16 @@ export default (error, req, res, next) => {
         )
     }
 
-    // Catch validation errors thrown by JOI
     if (error.name === 'ValidationError') {
-        res.json(error)
+        let errors = formatMongooseValidationErrors(error.errors)
+        res.status(400).json(
+            errorMsg({
+                errors,
+                type: error.name,
+                message: 'You have some validation error',
+                stack: process.env.NODE_ENV === 'dev' ? error.stack : undefined,
+            })
+        )
     }
 
     /**
@@ -38,12 +37,12 @@ export default (error, req, res, next) => {
      * -----------------------------------------------------------------
      */
 
-    res.status(error.statusCode || 500).json(
-        errorMsg({
-            type: error.name,
-            message: error.message,
-            errors: error?.errors,
-            stack: process.env.NODE_ENV === 'dev' ? error?.stack : undefined,
-        })
-    )
+    // res.status(error.statusCode || 500).json(
+    //     errorMsg({
+    //         type: error.name,
+    //         message: error.message,
+    //         errors: error?.errors,
+    //         stack: process.env.NODE_ENV === 'dev' ? error?.stack : undefined,
+    //     })
+    // )
 }
