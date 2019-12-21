@@ -1,11 +1,10 @@
 import Comment from './model'
 
-const store = async (req, res) => {
-    req.body.author = req.user._id
-    let comment = await Comment.create(req.body)
-    res.json(comment)
+export const store = async (req, res) => {
+    // req.body.author = req.user._id
+    // let comment = await Comment.create(req.body)
+    // res.json(comment)
+    res.json(req.user._id)
 }
-const update = (req, res) => {}
-const destroy = (req, res) => {}
-
-module.exports = { store, update, destroy }
+export const update = (req, res) => {}
+export const destroy = (req, res) => {}
