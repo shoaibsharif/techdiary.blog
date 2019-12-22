@@ -1,10 +1,11 @@
 import Joi from '@hapi/joi'
-import AppError from '../../utils/AppError'
-import User from './model'
+import AppError from '$utils/AppError'
 
 import jwt from 'jsonwebtoken'
 import { compare, hash } from 'bcryptjs'
-import catchErrors from '../../utils/catchErrors'
+import catchErrors from '$utils/catchErrors'
+
+import User from './model'
 
 const register = catchErrors(async (req, res) => {
     let user = await User.create(req.body)

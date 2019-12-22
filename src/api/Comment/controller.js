@@ -1,5 +1,5 @@
 import Comment from './model'
-import { storeOne, deleteOne, updateOne } from '../factory'
+import { storeOne, deleteOne, updateOne } from '$factory'
 
 export const store = storeOne({ model: Comment })
 export const update = updateOne({ model: Comment })

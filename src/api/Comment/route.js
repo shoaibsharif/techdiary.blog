@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import isAuthenticated from '../../middlewares/isAuthenticated'
+import isAuthenticated from '$middlewares/isAuthenticated'
 import assignUser from '$middlewares/assignUser'
 
 const router = Router()

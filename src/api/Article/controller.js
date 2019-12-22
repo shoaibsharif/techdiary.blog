@@ -1,24 +1,12 @@
 import Article from './model'
-import { getAll, getOne, deleteOne, storeOne } from '../factory'
+import { getAll, getOne, deleteOne, storeOne, deleteOne } from '$factory'
 
-const index = getAll({ model: Article })
-const store = storeOne({ model: Article })
-const show = getOne({
+export const index = getAll({ model: Article })
+export const store = storeOne({ model: Article })
+export const show = getOne({
     model: Article,
     searchKey: 'slug',
     population: { path: 'comments author' },
 })
-const destroy = deleteOne({ model: Article })
-
-const update = async (req, res) => {
-    // let article = await req.article.updateOne(req.body, { new: true })
-    let article = await Article.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-    })
-    res.json({
-        message: 'Article updated successfully',
-        article,
-    })
-}
-
-module.exports = { index, store, show, destroy, update }
+export const destroy = deleteOne({ model: Article })
+export const update = updateOne({ model: Article })
