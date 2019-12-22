@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
-import AppError from '$utils/AppError'
-import User from '$api/User/model'
+import AppError from '../utils/AppError'
+import User from '../api/User/model'
 
 const isAuthenticated = async (req, res, next) => {
     let token = req.cookies.token

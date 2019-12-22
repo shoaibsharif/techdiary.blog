@@ -5,7 +5,7 @@
         "start": "env-cmd -f env/.prod.env nodemon --exec babel-node src/server.js",
         "dev": "env-cmd -f env/.dev.env nodemon --exec babel-node src/server.js",
         "api-doc": "apidoc -i src -o docs",
-        "build": "babel src -o build"
+        "build": "babel src -o build/"
     },
     "keywords": [],
     "author": {

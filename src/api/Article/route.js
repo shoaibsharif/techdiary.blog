@@ -1,14 +1,15 @@
 import { Router } from 'express'
-import catchErrors from '$utils/catchErrors'
+import catchErrors from '../../utils/catchErrors'
 import isAuthenticated from '$middlewares/isAuthenticated'
-import AppError from '$utils/AppError'
+import AppError from '../../utils/AppError'
+import assignUser from '../../middlewares/assignUser'
 import Article from './model'
 const router = Router()
 
 import { index, store, show, destroy, update } from './controller'
 
 const thisIsMyArticle = async (req, res, next) => {
-    let article = await Article.findById(req.params.id)
+    let article = await Article.findById(req.params._id)
 
     if (!article) {
         throw new AppError('আরটিক্যাল খুজে পাওয়া যায়নি', 404)
@@ -26,11 +27,12 @@ const thisIsMyArticle = async (req, res, next) => {
 router
     .route('/')
     .get(catchErrors(index))
-    .post(catchErrors(isAuthenticated), catchErrors(store))
+    .post(catchErrors(isAuthenticated), assignUser, catchErrors(store))
+
+router.get('/:slug', catchErrors(show))
 
 router
-    .route('/:id')
-    .get(catchErrors(show))
+    .route('/:_id')
     .put(
         catchErrors(isAuthenticated),
         catchErrors(thisIsMyArticle),

@@ -27,6 +27,8 @@ const SchemaDefinition = new Schema(
         body: {
             type: String,
             trim: true,
+            required: [true, 'Article body required'],
+            minlength: [150, 'Article should atleast 150 characters'],
         },
         isAnonymous: {
             type: Boolean,
@@ -39,6 +41,7 @@ const SchemaDefinition = new Schema(
         author: {
             type: Schema.ObjectId,
             ref: 'User',
+            required: [true, 'Author id required'],
         },
     },
     {
@@ -62,19 +65,10 @@ SchemaDefinition.pre('save', function(next) {
     next()
 })
 
-SchemaDefinition.pre(/^find/, function(next) {
-    this.populate({
-        path: 'author',
-        select: '-password',
-    })
-
-    next()
-})
-
-// todo
 SchemaDefinition.virtual('excerpt').get(function() {
     return this.body?.slice(0, 50) + '...'
 })
+
 SchemaDefinition.virtual('isEdited').get(function() {
     return this.createdAt != this.updatedAt
 })

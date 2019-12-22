@@ -8,12 +8,15 @@ export default (error, req, res, next) => {
      * -----------------------------------------------------------------
      */
 
+    console.log(JSON.stringify(error, undefined, 4))
+
     // error thrown by AppError
     if (error.name === 'AppError') {
         res.status(error.statusCode).json(
             errorMsg({
                 type: error.name,
                 message: error.message,
+                statusCode: error?.statusCode,
                 stack: process.env.NODE_ENV === 'dev' ? error.stack : undefined,
             })
         )
@@ -37,12 +40,13 @@ export default (error, req, res, next) => {
      * -----------------------------------------------------------------
      */
 
-    // res.status(error.statusCode || 500).json(
-    //     errorMsg({
-    //         type: error.name,
-    //         message: error.message,
-    //         errors: error?.errors,
-    //         stack: process.env.NODE_ENV === 'dev' ? error?.stack : undefined,
-    //     })
-    // )
+    res.status(error.statusCode || 500).json(
+        errorMsg({
+            type: error.name,
+            message: error.message,
+            statusCode: error.statusCode || 500,
+            errors: error?.errors,
+            stack: process.env.NODE_ENV === 'dev' ? error?.stack : undefined,
+        })
+    )
 }

@@ -1,5 +1,5 @@
 import Joi from '@hapi/joi'
-import AppError from '$utils/AppError'
+import AppError from '../../utils/AppError'
 import User from './model'
 
 import jwt from 'jsonwebtoken'
