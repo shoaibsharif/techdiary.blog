@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken'
 import AppError from '../utils/AppError'
 import User from '../api/User/model'
+import catchErrors from '../utils/catchErrors'
 
-const isAuthenticated = async (req, res, next) => {
+const isAuthenticated = catchErrors(async (req, res, next) => {
     let token = req.cookies.token
 
     if (!token) {
@@ -13,6 +14,6 @@ const isAuthenticated = async (req, res, next) => {
         req.user = user
         next()
     }
-}
+})
 
 export default isAuthenticated

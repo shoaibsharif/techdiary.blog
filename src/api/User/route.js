@@ -1,5 +1,4 @@
 import { Router } from 'express'
-import catchErrors from '$utils/catchErrors'
 import isAuthenticated from '$middlewares/isAuthenticated'
 
 import {
@@ -14,21 +13,12 @@ import {
 
 const router = Router()
 
-router.post('/login', catchErrors(login))
-router.post('/register', catchErrors(register))
-router.post(
-    '/update-profile',
-    catchErrors(isAuthenticated),
-    catchErrors(updateProfile)
-)
-router.post(
-    '/update-password',
-    catchErrors(isAuthenticated),
-    catchErrors(updatePassword)
-)
-router.get('/me', catchErrors(isAuthenticated), catchErrors(me))
-router.get('/users', catchErrors(users))
-router.post('/logout', catchErrors(isAuthenticated), logout)
-// router.post('/password-recovery-request')
+router.post('/login', login)
+router.post('/register', register)
+router.post('/update-profile', isAuthenticated, updateProfile)
+router.post('/update-password', isAuthenticated, updatePassword)
+router.get('/me', isAuthenticated, me)
+router.get('/users', users)
+router.post('/logout', isAuthenticated, logout)
 
 export default router

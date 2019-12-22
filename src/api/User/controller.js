@@ -4,17 +4,18 @@ import User from './model'
 
 import jwt from 'jsonwebtoken'
 import { compare, hash } from 'bcryptjs'
+import catchErrors from '../../utils/catchErrors'
 
-const register = async (req, res) => {
+const register = catchErrors(async (req, res) => {
     let user = await User.create(req.body)
     res.json({
         message:
             'সফল ভাবে Registration করেছেন। লগইন করার আগে আপনাকে অবশ্যই ইমেইল verify করতে হবে।',
         user,
     })
-}
+})
 
-const login = async (req, res) => {
+const login = catchErrors(async (req, res) => {
     const schema = Joi.object().keys({
         user: Joi.string().required(),
         password: Joi.string().required(),
@@ -66,19 +67,19 @@ const login = async (req, res) => {
     }
 
     res.json(user)
-}
+})
 
-const me = async (req, res) => {
+const me = catchErrors(async (req, res) => {
     let me = await User.findOne({ _id: req.user._id }).populate('articles')
     res.json(me)
-}
+})
 
-const users = async (req, res) => {
+const users = catchErrors(async (req, res) => {
     let users = await User.find()
     res.json({
         users,
     })
-}
+})
 
 const logout = (req, res) => {
     res.clearCookie('token')
@@ -87,7 +88,7 @@ const logout = (req, res) => {
     })
 }
 
-const updateProfile = async (req, res) => {
+const updateProfile = catchErrors(async (req, res) => {
     const schema = Joi.object().keys({
         name: Joi.string(),
         username: Joi.string(),
@@ -104,7 +105,7 @@ const updateProfile = async (req, res) => {
         message: 'আপনার প্রোফাইলের তথ্য হালনাগাদ হয়েগেছে',
         user,
     })
-}
+})
 
 const updatePassword = async (req, res) => {
     const schema = Joi.object().keys({
