@@ -32,11 +32,35 @@ export const storeOne = ({ model }) =>
         })
     })
 
+export const updateOne = ({ model, searchKey = '_id' }) =>
+    catchErrors(async (req, res) => {
+        let data = await model.findOneAndUpdate(
+            {
+                [searchKey]: req.params[searchKey],
+            },
+            req.body,
+            {
+                new: true,
+                runValidators: true,
+            }
+        )
+
+        if (!data) throw new AppError('Resource not found', 404)
+
+        res.json({
+            message: 'Updated successfully',
+            data,
+        })
+    })
+
 export const deleteOne = ({ model, searchKey = '_id' }) =>
     catchErrors(async (req, res) => {
         let data = await model.findOneAndDelete({
             [searchKey]: req.params[searchKey],
         })
+
+        if (!data) throw new AppError('Resource not found', 404)
+
         res.json({
             message: 'Deleted successfully',
             data,

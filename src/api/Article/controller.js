@@ -6,7 +6,7 @@ const store = storeOne({ model: Article })
 const show = getOne({
     model: Article,
     searchKey: 'slug',
-    population: { path: 'author' },
+    population: { path: 'comments author' },
 })
 const destroy = deleteOne({ model: Article })
 

@@ -65,6 +65,8 @@ SchemaDefinition.pre('save', function(next) {
     next()
 })
 
+// SchemaDefinition.pre('')
+
 SchemaDefinition.virtual('excerpt').get(function() {
     return this.body?.slice(0, 50) + '...'
 })

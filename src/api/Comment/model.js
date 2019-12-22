@@ -6,6 +6,7 @@ const SchemaDefinition = new Schema(
             type: String,
             trim: true,
             required: [true, 'Comment body is required'],
+            minlength: [10, 'Comment should atleast 10 characters'],
         },
         isAnonymous: {
             type: Boolean,
