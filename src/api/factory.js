@@ -1,9 +1,11 @@
 import catchErrors from '../utils/catchErrors'
 import AppError from '$utils/AppError'
 
-export const getAll = ({ model }) =>
+export const getAll = ({ model, population }) =>
     catchErrors(async (req, res) => {
-        let data = await model.find()
+        let query = model.find()
+        if (population) query = query.populate(population)
+        let data = await query
         res.json({
             count: data.length,
             data,
