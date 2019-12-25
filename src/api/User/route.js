@@ -17,7 +17,7 @@ router.post('/login', login)
 router.post('/register', register)
 router.post('/update-profile', isAuthenticated, updateProfile)
 router.post('/update-password', isAuthenticated, updatePassword)
-router.get('/me', isAuthenticated, me)
+router.get('/me', me)
 router.get('/users', users)
 router.post('/logout', isAuthenticated, logout)
 

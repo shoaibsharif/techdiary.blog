@@ -1,6 +1,7 @@
 import Joi from '@hapi/joi'
 import AppError from '$utils/AppError'
 
+import { promisify } from 'util'
 import jwt from 'jsonwebtoken'
 import { compare, hash } from 'bcryptjs'
 import catchErrors from '$utils/catchErrors'
@@ -17,11 +18,8 @@ const register = catchErrors(async (req, res) => {
 })
 
 const login = catchErrors(async (req, res) => {
-    const schema = Joi.object().keys({
-        user: Joi.string().required(),
-        password: Joi.string().required(),
-    })
-    await schema.validateAsync(req.body, { abortEarly: false })
+    if (!req.body.user || !req.body.password)
+        throw new AppError('ইউজারনেম এবং পাসওয়ার্ড দিন', 406)
 
     let user = await User.findOne({
         $or: [{ username: req.body.user }, { email: req.body.user }],
@@ -71,7 +69,14 @@ const login = catchErrors(async (req, res) => {
 })
 
 const me = catchErrors(async (req, res) => {
-    let me = await User.findOne({ _id: req.user._id }).populate('articles')
+    let token = req.cookies.token
+
+    if (!token) res.send(null)
+
+    let { userId } = await promisify(jwt.verify)(token, process.env.APP_SECRET)
+    const user = User.findOne({ _id: userId })
+
+    let me = await user.populate('articles')
     res.json(me)
 })
 

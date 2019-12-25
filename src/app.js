@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import cookie from 'cookie-parser'
 import morgan from 'morgan'
-import catchGlobalError from '$utils/catchGlobalError'
+import catchGlobalError from './middlewares/catchGlobalError'
 
 /**
  * V1
@@ -17,7 +17,14 @@ const app = express()
 /**
  * Enable cors
  */
-app.use(cors())
+
+app.use(
+    cors({
+        origin: 'http://localhost:3000',
+        optionsSuccessStatus: 200,
+        credentials: true,
+    })
+)
 
 app.use(cookie(process.env.APP_SECRET))
 
