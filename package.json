@@ -9,7 +9,8 @@
         "server-build": "babel src --out-dir build",
         "dev": "concurrently \"npm run server-dev\" \"npm run frontend\"",
         "build": "concurrently \"npm run server-build\" \"npm run frontend-build\"",
-        "api-doc": "apidoc -i src -o docs"
+        "api-doc": "apidoc -i src -o docs",
+        "postinstall": "npm run build"
     },
     "keywords": [],
     "author": {
