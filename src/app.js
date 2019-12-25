@@ -1,5 +1,4 @@
 import express from 'express'
-import cors from 'cors'
 import cookie from 'cookie-parser'
 import morgan from 'morgan'
 import catchGlobalError from './middlewares/catchGlobalError'
@@ -17,18 +16,6 @@ import apiBootstrap_v1 from './api'
 const app = express()
 
 app.use(express.static('public'))
-
-/**
- * Enable cors
- */
-
-app.use(
-    cors({
-        origin: 'http://localhost:3000',
-        optionsSuccessStatus: 200,
-        credentials: true,
-    })
-)
 
 app.use(cookie(process.env.APP_SECRET))
 
