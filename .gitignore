@@ -5,10 +5,18 @@
 # node.js
 #
 node_modules/
+
+## envs
+env/.prod.env
+env/.dev.env
+
+#dist
+build
+public/dist
+
 npm-debug.log
 yarn-error.log
 yarn.lock
-dist
 .cache
 deployment.yml
 service.yml

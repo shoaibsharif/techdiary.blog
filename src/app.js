@@ -4,6 +4,8 @@ import cookie from 'cookie-parser'
 import morgan from 'morgan'
 import catchGlobalError from './middlewares/catchGlobalError'
 
+import fs from 'fs'
+
 /**
  * V1
  */
@@ -13,6 +15,8 @@ import apiBootstrap_v1 from './api'
  * Initialize Express application
  */
 const app = express()
+
+app.use(express.static('public'))
 
 /**
  * Enable cors
@@ -52,13 +56,17 @@ app.use(express.json())
 //         },
 //     })
 // })
-app.use('/api/v1', apiBootstrap_v1)
 
-// Fallback router
-app.all('*', (_, res) => {
+app.use('/api/v1/', apiBootstrap_v1)
+app.all('/api/*', (_, res) => {
     res.status(404).json({
         message: 'Invalid api route',
     })
+})
+
+app.all('*', (req, res) => {
+    let content = fs.readFileSync('./public/index.html')
+    res.send(content.toString())
 })
 
 app.use(catchGlobalError)
