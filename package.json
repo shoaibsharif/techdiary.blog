@@ -7,7 +7,7 @@
         "frontend-build": "parcel build ./app/index.js --out-dir ./public/dist",
         "server-dev": "env-cmd -f env/.dev.env nodemon --exec babel-node src/server.js",
         "server-build": "babel src --out-dir build",
-        "dev": "concurrently \"npm run server-dev\" \"npm run frontend\"",
+        "dev": "concurrently \"npm run server-dev\" \"npm run frontend-dev\"",
         "build": "concurrently \"npm run server-build\" \"npm run frontend-build\"",
         "api-doc": "apidoc -i src -o docs",
         "postinstall": "npm run build"

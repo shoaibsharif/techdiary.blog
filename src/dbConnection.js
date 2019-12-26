@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 mongoose.connect(process.env.DATABASE_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useCreateIndex: true,
 })
 
 mongoose.Promise = global.Promise // Tell Mongoose to use ES6 promises
